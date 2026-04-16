@@ -1,7 +1,7 @@
 "use server";
 
 import * as cheerio from "cheerio";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { VideoScriptSchema, VideoScript } from "@/lib/schema";
 
 // Initialize the Google Generative AI client
@@ -75,29 +75,26 @@ export async function generateAdScript(url: string): Promise<PipelineResult> {
       model: "gemini-2.5-flash",
       generationConfig: {
         responseMimeType: "application/json",
+        responseSchema: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              durationInFrames: { type: SchemaType.NUMBER },
+              textOverlay: { type: SchemaType.STRING },
+              voiceoverText: { type: SchemaType.STRING }
+            },
+            required: ["durationInFrames", "textOverlay", "voiceoverText"],
+          }
+        }
       },
     });
 
-    const prompt = `
-You are a top-tier Direct Response Video Ad Copywriter.
-Create a high-converting, 15-second direct-response video ad script for the following product.
+    const prompt = `Write a 15-sec high-converting video ad script.
+Title: ${title}
+Desc: ${description}
 
-Product Title: ${title}
-Product Description: ${description}
-
-The script MUST be exactly a JSON array of objects fitting this schema:
-[
-  {
-    "durationInFrames": number (assume 30fps, so 15 seconds = 450 frames total),
-    "textOverlay": string (concise punchy text on screen),
-    "voiceoverText": string (the script spoken by the voiceover)
-  }
-]
-
-Ensure the total durationInFrames across all objects adds up exactly to 450 frames (15 seconds).
-The tone should be engaging, urgency-driven, and highly persuasive.
-DO NOT wrap the JSON in markdown code blocks. OUTPUT RAW JSON.
-    `;
+Return ONLY the required JSON fields. durationInFrames MUST add to 450.`;
 
     const result = await model.generateContent(prompt);
     
@@ -111,7 +108,12 @@ DO NOT wrap the JSON in markdown code blocks. OUTPUT RAW JSON.
     }
 
     // Force validation via Zod
-    const validatedScript = VideoScriptSchema.parse(parsedJson);
+    let validatedScript;
+    try {
+      validatedScript = VideoScriptSchema.parse(parsedJson);
+    } catch {
+      throw new Error("ZOD SCHEMA VALIDATION FAILED");
+    }
 
     return {
       success: true,
