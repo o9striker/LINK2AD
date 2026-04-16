@@ -1,5 +1,7 @@
 "use client";
 
+import { Player } from '@/components/video/Player';
+
 import { useState, useCallback } from "react";
 import { Zap, Link2, Code2, Film, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -131,12 +133,6 @@ function RenderPlaceholder({ state }: { state: EngineState }) {
       </div>
       <div className="text-center">
         <p className="text-sm font-semibold text-foreground">Reel Ready</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {"<RemotionPlayer />"} will mount here
-        </p>
-      </div>
-      <div className="px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-        <span className="text-xs text-emerald-400 font-mono">awaiting remotion integration</span>
       </div>
     </div>
   );
@@ -452,10 +448,9 @@ export default function DashboardPage() {
               >
                 {/* STRICT VALIDATION CHECKPOINT */}
                 {engineState === "success" && scriptData && Array.isArray(scriptData) && scriptData.every(s => typeof s.textOverlay === "string" && typeof s.durationInFrames === "number") ? (
-                  // Mount <Player inputProps={{ scenes: scriptData as any, imageUrl: "" }} /> here
-                  <RenderPlaceholder state={engineState} />
+                  <Player scriptData={scriptData as any} />
                 ) : (
-                  <RenderPlaceholder state={engineState} />
+                  <div className="text-gray-500">Awaiting URL...</div>
                 )}
               </div>
             </CardContent>
