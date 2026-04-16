@@ -161,31 +161,24 @@ export default function DashboardPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const trimmed = url.trim();
-
-    if (!trimmed) {
-      toast({
-        variant: "destructive",
-        title: "Empty URL",
-        description: "Please enter a product URL to generate a reel.",
-      });
-      return;
-    }
-
-    if (!isValidUrl(trimmed)) {
-      toast({
-        variant: "destructive",
-        title: "Invalid URL",
-        description: "Please enter a valid HTTP/HTTPS URL.",
-      });
-      return;
-    }
-
-    setEngineState("loading");
-    setScriptData(null);
-
     try {
+      const trimmed = url.trim();
+      const currentTimestamp = new Date().toISOString();
+      console.log(`[${currentTimestamp}] Checkpoint 1: URL Submitted -> ${trimmed}`);
+
+      if (!trimmed) {
+        throw new Error("Please enter a product URL to generate a reel.");
+      }
+
+      if (!isValidUrl(trimmed)) {
+        throw new Error("Please enter a valid HTTP/HTTPS URL.");
+      }
+
+      setEngineState("loading");
+      setScriptData(null);
+
+      console.log(`[${new Date().toISOString()}] Checkpoint 2: Server Action Called`);
+
       const response = await fetch("/api/pipeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -205,8 +198,12 @@ export default function DashboardPage() {
         throw new Error("Invalid response: missing script field");
       }
 
+      console.log(`[${new Date().toISOString()}] Checkpoint 3: Payload Received -> ${JSON.stringify(data.script)}`);
+
       setScriptData(data.script);
       setEngineState("success");
+
+      console.log(`[${new Date().toISOString()}] Checkpoint 4: State Updated, Player Mounting`);
 
       toast({
         title: "✓ Pipeline complete",
@@ -214,6 +211,7 @@ export default function DashboardPage() {
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "An unexpected error occurred";
+      console.error(`PIPELINE FRACTURE: ${message}`);
       setEngineState("error");
       setScriptData(null);
       toast({
@@ -452,7 +450,13 @@ export default function DashboardPage() {
                 aria-label="Remotion Player"
                 aria-live="polite"
               >
-                <RenderPlaceholder state={engineState} />
+                {/* STRICT VALIDATION CHECKPOINT */}
+                {engineState === "success" && scriptData && Array.isArray(scriptData) && scriptData.every(s => typeof s.textOverlay === "string" && typeof s.durationInFrames === "number") ? (
+                  // Mount <Player inputProps={{ scenes: scriptData as any, imageUrl: "" }} /> here
+                  <RenderPlaceholder state={engineState} />
+                ) : (
+                  <RenderPlaceholder state={engineState} />
+                )}
               </div>
             </CardContent>
           </Card>
