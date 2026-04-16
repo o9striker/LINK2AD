@@ -1,5 +1,5 @@
 {
-  "name": "link2ad-app",
+  "name": "link2ad",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,22 +10,31 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@radix-ui/react-scroll-area": "^1.2.2",
+    "@radix-ui/react-slot": "^1.1.1",
+    "@radix-ui/react-toast": "^1.2.4",
     "@remotion/player": "^4.0.448",
     "cheerio": "^1.2.0",
-    "next": "14.2.35",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.469.0",
+    "next": "14.2.29",
     "react": "^18",
     "react-dom": "^18",
     "remotion": "^4.0.448",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss-animate": "^1.0.7",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "autoprefixer": "^10.5.0",
     "eslint": "^8",
-    "eslint-config-next": "14.2.35",
+    "eslint-config-next": "14.2.29",
     "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }
 }

@@ -5,11 +5,16 @@ import { Player as RemotionPlayer } from '@remotion/player';
 import { ReelComposition, ReelCompositionProps } from './ReelComposition';
 
 export interface PlayerProps {
-  inputProps: ReelCompositionProps;
+  scriptData: ReelCompositionProps['scenes'];
   autoPlay?: boolean;
 }
 
-export const Player: React.FC<PlayerProps> = ({ inputProps, autoPlay = true }) => {
+export const Player: React.FC<PlayerProps> = ({ scriptData, autoPlay = true }) => {
+  const inputProps = React.useMemo<ReelCompositionProps>(() => ({
+    scenes: scriptData,
+    imageUrl: "" // Can be passed later if the pipeline provides a background
+  }), [scriptData]);
+
   // Calculate total duration across all sequential scenes
   const totalFrames = React.useMemo(() => {
     if (!inputProps.scenes) return 0;
