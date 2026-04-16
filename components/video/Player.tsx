@@ -6,14 +6,15 @@ import { ReelComposition, ReelCompositionProps } from './ReelComposition';
 
 export interface PlayerProps {
   scriptData: ReelCompositionProps['scenes'];
+  imageUrl?: string;
   autoPlay?: boolean;
 }
 
-export const Player: React.FC<PlayerProps> = ({ scriptData, autoPlay = true }) => {
+export const Player: React.FC<PlayerProps> = ({ scriptData, imageUrl = "", autoPlay = true }) => {
   const inputProps = React.useMemo<ReelCompositionProps>(() => ({
     scenes: scriptData,
-    imageUrl: "" // Can be passed later if the pipeline provides a background
-  }), [scriptData]);
+    imageUrl: imageUrl
+  }), [scriptData, imageUrl]);
 
   // Calculate total duration across all sequential scenes
   const totalFrames = React.useMemo(() => {

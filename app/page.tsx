@@ -457,7 +457,7 @@ export default function DashboardPage() {
               >
                 {/* STRICT VALIDATION CHECKPOINT */}
                 {engineState === "success" && scriptData && Array.isArray((scriptData as any).scenes) ? (
-                  <Player scriptData={adaptScriptForRemotion(scriptData)} />
+                  <Player scriptData={adaptScriptForRemotion(scriptData)} imageUrl={(scriptData as any).imageUrl || ""} />
                 ) : (
                   <div className="text-gray-500">Awaiting URL...</div>
                 )}

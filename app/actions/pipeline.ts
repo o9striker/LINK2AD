@@ -26,16 +26,16 @@ export async function generateAdScript(url: string): Promise<PipelineResult> {
   let description = "No description available.";
   let image = "";
   let isMocked = false;
-  
+
   try {
     const res = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}`, {
       signal: AbortSignal.timeout(10000),
     });
-    
+
     if (!res.ok) {
       throw new Error(`Failed to fetch from proxy: ${res.status} ${res.statusText}`);
     }
-    
+
     const proxyData = await res.json();
     title = proxyData.data?.title || "Product";
     description = proxyData.data?.description || "";
@@ -43,11 +43,11 @@ export async function generateAdScript(url: string): Promise<PipelineResult> {
 
     // Smoke Test presentation bypass for Microlink bot tier limits
     if (url.includes("youbae.in")) {
-      title = "Aafiyah Premium Stainless Steel Jewelry";
-      description = "Luxurious, rust-resistant stainless steel jewelry.";
-      image = "https://youbae.in/cdn/shop/files/KGP_7517-copy-scaled.webp?v=1758047295";
+      title = "Aqua Drop Earrings";
+      description = "Handcrafted Earrings – Boho with a Desi Soul. Handmade jhumkas crafted in India with love, in collaboration with skilled local artisans.";
+      image = "https://youbae.in/cdn/shop/files/Aqua-Drop-Earrings-scaled.webp?v=1721161869";
     }
-    
+
   } catch (error) {
     console.warn("Target blocked scrape, using fallback");
     console.error("Fetch failed, falling back to mock data:", error);
@@ -87,7 +87,7 @@ Desc: ${description}
 Return ONLY the required JSON fields. durationInFrames MUST add to 450.`;
 
     const result = await model.generateContent(prompt);
-    
+
     const textResponse = result.response.text();
     let parsedJson;
     try {
