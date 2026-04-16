@@ -141,7 +141,13 @@ function RenderPlaceholder({ state }: { state: EngineState }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const adaptScriptForRemotion = (data: any) => {
-  return data.scenes.map((scene: any) => ({
+  if (data?.imageUrl) {
+    console.log(`[${new Date().toISOString()}] ADAPTER: Mapping scenes with Image -> ${data.imageUrl}`);
+  } else {
+    console.warn(`[${new Date().toISOString()}] ADAPTER: WARNING - No imageUrl found in script data`);
+  }
+
+  return (data.scenes || []).map((scene: any) => ({
     durationInFrames: scene.duration_seconds * 30, // Assuming 30fps
     textOverlay: scene.visuals.overlay_text || "",
     voiceoverText: scene.audio.voiceover || "",

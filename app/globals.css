@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 6%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 263.4 70% 60%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
+    --background: 0 40% 4%;
+    --foreground: 0 20% 98%;
+    --card: 0 40% 6%;
+    --card-foreground: 0 20% 98%;
+    --popover: 0 40% 4%;
+    --popover-foreground: 0 20% 98%;
+    --primary: 0 72% 55%;
+    --primary-foreground: 0 20% 98%;
+    --secondary: 0 25% 16%;
+    --secondary-foreground: 0 20% 98%;
+    --muted: 0 25% 16%;
+    --muted-foreground: 0 10% 64%;
+    --accent: 0 25% 16%;
+    --accent-foreground: 0 20% 98%;
     --destructive: 0 72.2% 50.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 60%;
+    --destructive-foreground: 0 20% 98%;
+    --border: 0 25% 18%;
+    --input: 0 25% 16%;
+    --ring: 0 72% 55%;
     --radius: 0.75rem;
   }
 }
@@ -31,6 +31,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -41,13 +42,16 @@
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: hsl(var(--background));
 }
+
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
@@ -66,16 +70,23 @@ body::before {
 /* Gradient mesh background */
 .gradient-mesh {
   background:
-    radial-gradient(ellipse 80% 60% at 20% 0%, hsl(263 70% 40% / 0.25) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 80% 10%, hsl(220 70% 40% / 0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 100% 80% at 50% 100%, hsl(240 60% 20% / 0.3) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 20% 0%, hsl(0 70% 40% / 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 10%, hsl(15 70% 40% / 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 100% 80% at 50% 100%, hsl(350 60% 20% / 0.3) 0%, transparent 70%),
     hsl(var(--background));
 }
 
 /* Glow pulse animation */
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px hsl(263 70% 60% / 0.15), 0 0 40px hsl(263 70% 60% / 0.08); }
-  50% { box-shadow: 0 0 30px hsl(263 70% 60% / 0.3), 0 0 60px hsl(263 70% 60% / 0.15); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px hsl(0 72% 55% / 0.15), 0 0 40px hsl(0 72% 55% / 0.08);
+  }
+
+  50% {
+    box-shadow: 0 0 30px hsl(0 72% 55% / 0.3), 0 0 60px hsl(0 72% 55% / 0.15);
+  }
 }
 
 .glow-ring {
@@ -84,8 +95,13 @@ body::before {
 
 /* Spinner */
 @keyframes spin-smooth {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spinner {
@@ -98,6 +114,7 @@ body::before {
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -120,7 +137,7 @@ body::before {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, hsl(263 70% 75%) 0%, hsl(220 80% 75%) 50%, hsl(180 70% 70%) 100%);
+  background: linear-gradient(135deg, hsl(0 72% 70%) 0%, hsl(20 80% 68%) 50%, hsl(350 70% 72%) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -132,14 +149,23 @@ body::before {
 }
 
 .card-glow:hover {
-  box-shadow: 0 0 0 1px hsl(263 70% 60% / 0.3), 0 8px 32px hsl(263 70% 60% / 0.12);
-  border-color: hsl(263 70% 60% / 0.4);
+  box-shadow: 0 0 0 1px hsl(0 72% 55% / 0.3), 0 8px 32px hsl(0 72% 55% / 0.12);
+  border-color: hsl(0 72% 55% / 0.4);
 }
 
 /* Status dot */
 @keyframes status-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.85); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
 }
 
 .status-dot {
@@ -147,8 +173,22 @@ body::before {
 }
 
 /* JSON syntax highlight */
-.json-key { color: hsl(210 80% 72%); }
-.json-string { color: hsl(140 60% 65%); }
-.json-number { color: hsl(35 90% 68%); }
-.json-boolean { color: hsl(280 65% 72%); }
-.json-null { color: hsl(0 0% 60%); }
+.json-key {
+  color: hsl(0 80% 72%);
+}
+
+.json-string {
+  color: hsl(140 60% 65%);
+}
+
+.json-number {
+  color: hsl(35 90% 68%);
+}
+
+.json-boolean {
+  color: hsl(10 65% 72%);
+}
+
+.json-null {
+  color: hsl(0 0% 60%);
+}
