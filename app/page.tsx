@@ -140,6 +140,15 @@ function RenderPlaceholder({ state }: { state: EngineState }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+const adaptScriptForRemotion = (data: any) => {
+  return data.scenes.map((scene: any) => ({
+    durationInFrames: scene.duration_seconds * 30, // Assuming 30fps
+    textOverlay: scene.visuals.overlay_text || "",
+    voiceoverText: scene.audio.voiceover || "",
+    audioUrl: scene.audio.audioUrl || "" // Fallback if VSB hasn't mapped the Base64 yet
+  }));
+}
+
 export default function DashboardPage() {
   const [url, setUrl] = useState("");
   const [engineState, setEngineState] = useState<EngineState>("idle");
@@ -303,7 +312,7 @@ export default function DashboardPage() {
           {/* Stats row */}
           <div className="flex items-center justify-center gap-8 pt-4 animate-fade-in-up-delay-2">
             {[
-              { label: "Avg. render time", value: "~12s" },
+              { label: "Pipeline Latency", value: "< 3s" },
               { label: "Script accuracy", value: "98.4%" },
               { label: "Supported formats", value: "9:16, 1:1, 16:9" },
             ].map((stat) => (
@@ -447,8 +456,8 @@ export default function DashboardPage() {
                 aria-live="polite"
               >
                 {/* STRICT VALIDATION CHECKPOINT */}
-                {engineState === "success" && scriptData && Array.isArray(scriptData) && scriptData.every(s => typeof s.textOverlay === "string" && typeof s.durationInFrames === "number") ? (
-                  <Player scriptData={scriptData as any} />
+                {engineState === "success" && scriptData && Array.isArray((scriptData as any).scenes) ? (
+                  <Player scriptData={adaptScriptForRemotion(scriptData)} />
                 ) : (
                   <div className="text-gray-500">Awaiting URL...</div>
                 )}

@@ -55,12 +55,18 @@ const SceneContent: React.FC<{ scene: ReelScene; imageUrl: string }> = ({ scene,
   );
 
   return (
-    <AbsoluteFill>
-      <AbsoluteFill style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
-        <Img
-          src={imageUrl}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
+    <AbsoluteFill className="bg-black">
+      <AbsoluteFill style={{ 
+        transform: `scale(${scale})`, 
+        transformOrigin: 'center center',
+        background: 'linear-gradient(to bottom, #000000, #333333)'
+      }}>
+        {imageUrl && (
+          <Img
+            src={imageUrl}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        )}
       </AbsoluteFill>
       
       {/* Dimmed overlay for better text readability */}
