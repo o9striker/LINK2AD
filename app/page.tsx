@@ -1,17 +1,16 @@
 "use client";
 
-import { Player } from '@/components/video/Player';
-import { AudioPicker } from '@/components/ui/AudioPicker';
-import { DEFAULT_TRACK } from '@/lib/audioLibrary';
-
 import { useState, useCallback } from "react";
-import { Zap, Link2, Code2, Film, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Zap, Link2, Code2, Film, AlertCircle, CheckCircle2, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { Player } from '@/components/video/Player';
+import { AudioPicker } from '@/components/ui/AudioPicker';
+import { DEFAULT_TRACK } from '@/lib/audioLibrary';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,7 +21,7 @@ interface PipelineResponse {
 
 type EngineState = "idle" | "loading" | "success" | "error";
 
-// ─── Syntax Highlighter ───────────────────────────────────────────────────────
+// ─── Utils & Adapters ─────────────────────────────────────────────────────────
 
 function highlightJson(json: string): string {
   return json
@@ -45,16 +44,46 @@ function highlightJson(json: string): string {
     );
 }
 
+const adaptScriptForRemotion = (data: any) => {
+  return (data.scenes || []).map((scene: any) => ({
+    durationInFrames: (scene.duration_seconds || 3) * 30,
+    textOverlay: scene.visuals?.overlay_text || "",
+    voiceoverText: scene.audio?.voiceover || "",
+    audioUrl: scene.audio?.audioUrl || "",
+    sceneImage: scene.visuals?.imageUrl || ""
+  }));
+}
+
 // ─── Sub-Components ───────────────────────────────────────────────────────────
+
+function StatusBadge({ state }: { state: EngineState }) {
+  const styles = {
+    idle: "bg-muted/40 border-border/50 text-muted-foreground/60",
+    loading: "bg-amber-500/10 border-amber-500/30 text-amber-400",
+    success: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400",
+    error: "bg-destructive/10 border-destructive/30 text-destructive",
+  };
+  const labels = {
+    idle: "standby",
+    loading: "generating…",
+    success: "ready",
+    error: "failed",
+  };
+  return (
+    <div className={`px-2 py-1 rounded-full text-[10px] font-mono border uppercase tracking-wider ${styles[state]}`}>
+      {labels[state]}
+    </div>
+  );
+}
 
 function ScriptSkeleton() {
   return (
-    <div className="space-y-2 p-1">
-      {[...Array(12)].map((_, i) => (
+    <div className="space-y-3 p-1">
+      {[...Array(10)].map((_, i) => (
         <Skeleton
           key={i}
-          className="h-4 rounded-sm"
-          style={{ width: `${60 + Math.random() * 35}%`, opacity: 1 - i * 0.05 }}
+          className="h-3 rounded-sm bg-primary/5"
+          style={{ width: `${40 + Math.random() * 50}%`, opacity: 1 - i * 0.08 }}
         />
       ))}
     </div>
@@ -64,107 +93,40 @@ function ScriptSkeleton() {
 function RenderPlaceholder({ state }: { state: EngineState }) {
   if (state === "idle") {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 py-16 text-muted-foreground">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-2xl bg-secondary/60 flex items-center justify-center">
-            <Film className="w-8 h-8 text-muted-foreground/60" />
-          </div>
-          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-secondary border-2 border-card flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-muted-foreground/40 status-dot" />
-          </div>
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
+        <div className="w-16 h-16 rounded-2xl bg-secondary/60 flex items-center justify-center">
+          <Film className="w-8 h-8 text-muted-foreground/60" />
         </div>
-        <div className="text-center">
-          <p className="text-sm font-medium text-muted-foreground/80">Waiting for URL…</p>
-          <p className="text-xs text-muted-foreground/50 mt-1">
-            Submit a product link to begin rendering
-          </p>
-        </div>
+        <p className="text-xs font-medium opacity-50 uppercase tracking-widest">Feed Standby</p>
       </div>
     );
   }
-
   if (state === "loading") {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-5 py-16">
+      <div className="flex flex-col items-center justify-center h-full gap-5">
         <div className="relative w-16 h-16">
-          {/* Outer ring */}
           <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
-          {/* Spinning arc */}
           <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary spinner" />
-          {/* Inner glow */}
           <div className="absolute inset-2 rounded-full bg-primary/10 flex items-center justify-center">
             <Loader2 className="w-4 h-4 text-primary animate-spin" />
           </div>
         </div>
-        <div className="text-center">
-          <p className="text-sm font-semibold text-foreground">Rendering Reel…</p>
-          <p className="text-xs text-muted-foreground mt-1">Processing pipeline • Please wait</p>
-        </div>
-        <div className="flex gap-1.5">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="w-1.5 h-1.5 rounded-full bg-primary/60"
-              style={{ animation: `status-pulse 1.4s ease-in-out ${i * 0.2}s infinite` }}
-            />
-          ))}
-        </div>
+        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Rendering Frame Buffer...</p>
       </div>
     );
   }
-
   if (state === "error") {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 py-16 text-muted-foreground">
-        <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center">
-          <AlertCircle className="w-8 h-8 text-destructive" />
-        </div>
-        <div className="text-center">
-          <p className="text-sm font-medium text-destructive">Pipeline Error</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">Check the error details above</p>
-        </div>
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-destructive">
+        <AlertCircle className="w-10 h-10" />
+        <p className="text-xs font-bold uppercase">Pipeline Fracture</p>
       </div>
     );
   }
-
-  // state === "success"
-  return (
-    <div className="flex flex-col items-center justify-center h-full gap-4 py-16">
-      <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-        <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-      </div>
-      <div className="text-center">
-        <p className="text-sm font-semibold text-foreground">Reel Ready</p>
-      </div>
-    </div>
-  );
+  return null;
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-
-const adaptScriptForRemotion = (data: any) => {
-  if (data?.imageUrl) {
-    console.log(`[${new Date().toISOString()}] ADAPTER: Mapping scenes with Image -> ${data.imageUrl}`);
-  } else {
-    console.warn(`[${new Date().toISOString()}] ADAPTER: WARNING - No imageUrl found in script data`);
-  }
-
-  return (data.scenes || []).map((scene: any) => {
-    let extractedImage = scene.visuals.imageUrl || "";
-    // If Gemini hallucinates "none" or an invalid path, wipe it so the global fallback applies
-    if (extractedImage && !extractedImage.startsWith('http')) {
-      extractedImage = "";
-    }
-    
-    return {
-      durationInFrames: scene.duration_seconds * 30, // Assuming 30fps
-      textOverlay: scene.visuals.overlay_text || "",
-      voiceoverText: scene.audio.voiceover || "",
-      audioUrl: scene.audio.audioUrl || "", // Fallback if VSB hasn't mapped the Base64 yet
-      sceneImage: extractedImage
-    };
-  });
-}
 
 export default function DashboardPage() {
   const [url, setUrl] = useState("");
@@ -176,34 +138,14 @@ export default function DashboardPage() {
   const [exportProgress, setExportProgress] = useState(0);
   const { toast } = useToast();
 
-  const isValidUrl = useCallback((value: string): boolean => {
-    try {
-      const parsed = new URL(value);
-      return ["http:", "https:"].includes(parsed.protocol);
-    } catch {
-      return false;
-    }
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const trimmed = url.trim();
-      const currentTimestamp = new Date().toISOString();
-      console.log(`[${currentTimestamp}] Checkpoint 1: URL Submitted -> ${trimmed}`);
-
-      if (!trimmed) {
-        throw new Error("Please enter a product URL to generate a reel.");
-      }
-
-      if (!isValidUrl(trimmed)) {
-        throw new Error("Please enter a valid HTTP/HTTPS URL.");
-      }
+      if (!trimmed) throw new Error("URL is required.");
 
       setEngineState("loading");
       setScriptData(null);
-
-      console.log(`[${new Date().toISOString()}] Checkpoint 2: Server Action Called`);
 
       const response = await fetch("/api/pipeline", {
         method: "POST",
@@ -211,46 +153,22 @@ export default function DashboardPage() {
         body: JSON.stringify({ url: trimmed, aspectRatio, audioUrl }),
       });
 
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ message: "Unknown server error" }));
-        throw new Error(
-          (errorBody as { message?: string }).message ?? `API error: ${response.status}`
-        );
-      }
+      if (!response.ok) throw new Error("Engine fault: Pipeline failed.");
 
       const data = (await response.json()) as PipelineResponse;
-
-      if (!data.script) {
-        throw new Error("Invalid response: missing script field");
-      }
-
-      console.log(`[${new Date().toISOString()}] Checkpoint 3: Payload Received -> ${JSON.stringify(data.script)}`);
-
       setScriptData(data.script);
       setEngineState("success");
 
-      console.log(`[${new Date().toISOString()}] Checkpoint 4: State Updated, Player Mounting`);
-
-      toast({
-        title: "✓ Pipeline complete",
-        description: "Script generated and reel queued for rendering.",
-      });
+      toast({ title: "Pipeline Online", description: "Script and preview synchronized." });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "An unexpected error occurred";
-      console.error(`PIPELINE FRACTURE: ${message}`);
       setEngineState("error");
-      setScriptData(null);
-      toast({
-        variant: "destructive",
-        title: "Pipeline Failed",
-        description: message,
-      });
+      toast({ variant: "destructive", title: "Internal Pipeline Error", description: err instanceof Error ? err.message : "Fault detected." });
     }
   };
 
   const handleExport = async () => {
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({
+      const stream = await (navigator.mediaDevices as any).getDisplayMedia({
         video: { displaySurface: "browser" },
         audio: true
       });
@@ -258,10 +176,7 @@ export default function DashboardPage() {
       const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
       const chunks: BlobPart[] = [];
       
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-      
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: "video/webm" });
         const downloadUrl = URL.createObjectURL(blob);
@@ -270,14 +185,8 @@ export default function DashboardPage() {
         a.download = "reel-export.webm";
         a.click();
         URL.revokeObjectURL(downloadUrl);
-        
-        // Stop screen sharing tracks
-        stream.getTracks().forEach(track => track.stop());
-        
-        toast({
-          title: "✓ Success",
-          description: "Success: Reel rendered via Edge Node.",
-        });
+        stream.getTracks().forEach((track: any) => track.stop());
+        toast({ title: "✓ Export Complete", description: "Reel rendered and saved to local disk." });
         setIsExporting(false);
         setExportProgress(0);
       };
@@ -287,314 +196,153 @@ export default function DashboardPage() {
       
       let progress = 0;
       const interval = setInterval(() => {
-        progress += 2.5; // (100 / (4000ms / 100ms)) = 2.5% per 100ms
+        progress += 2.5;
         if (progress >= 100) progress = 100;
         setExportProgress(progress);
       }, 100);
       
       setTimeout(() => {
         clearInterval(interval);
-        if (mediaRecorder.state !== "inactive") {
-          mediaRecorder.stop();
-        }
-      }, 4000); // Stop after 4 seconds
+        if (mediaRecorder.state !== "inactive") mediaRecorder.stop();
+      }, 4000);
       
     } catch (err) {
-      console.error("Export failed:", err);
       setIsExporting(false);
-      setExportProgress(0);
-      toast({
-        variant: "destructive",
-        title: "Export Failed",
-        description: "Could not capture browser tab.",
-      });
+      toast({ variant: "destructive", title: "Export Failed", description: "System capture was aborted." });
     }
   };
 
   const isLoading = engineState === "loading";
-  const hasScript = engineState === "success" && scriptData !== null;
 
   return (
     <main className="min-h-screen gradient-mesh">
-      {/* Top nav bar */}
       <nav className="border-b border-border/40 backdrop-blur-md bg-background/40 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center">
               <Zap className="w-3.5 h-3.5 text-primary" />
             </div>
-            <span className="font-semibold text-sm tracking-tight text-foreground">
-              LINK<span className="text-primary">2</span>AD
+            <span className="font-semibold text-sm tracking-tight text-foreground uppercase tracking-widest">
+              LINK<span className="text-primary">2</span>AD <span className="text-[10px] text-muted-foreground ml-2 font-mono opacity-40">v2.4</span>
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 status-dot" />
-            <span className="text-xs text-muted-foreground font-mono">pipeline online</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 status-dot" />
+            <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">core:stable</span>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 py-16 space-y-14">
-        {/* ── Hero Section ── */}
+      <div className="max-w-7xl mx-auto px-6 py-16 space-y-12">
         <section className="text-center space-y-6 animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/25 bg-primary/8 text-xs font-medium text-primary/80 mb-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary status-dot" />
-            AI-Powered Video Ad Platform
-          </div>
-
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight">
-            Turn any URL into a{" "}
-            <span className="gradient-text">viral reel</span>
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-none">
+            Automate <span className="gradient-text">Creative</span>
           </h1>
-
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            Paste a product link. Our AI generates the script, scenes, and renders a
-            scroll-stopping video ad — fully automated.
+          <p className="text-base text-muted-foreground max-w-lg mx-auto leading-relaxed opacity-60">
+            High-speed AI pipeline for turning product URLs into professional reels.
           </p>
 
-          {/* URL Input Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto mt-8 animate-fade-in-up-delay-1"
-            aria-label="Generate Reel Form"
-          >
-            <div className="relative flex-1">
-              <Link2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 pointer-events-none" />
-              <Input
-                id="product-url-input"
-                type="url"
-                placeholder="https://example.com/product"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                disabled={isLoading}
-                className="pl-10 h-12 text-sm bg-secondary/40 border-border/60 focus:border-primary/50 transition-all placeholder:text-muted-foreground/40 glow-ring"
-                aria-label="Product URL"
-                autoComplete="url"
-              />
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-3xl mx-auto mt-8 animate-fade-in-up-delay-1">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                <Input
+                  type="url"
+                  placeholder="Paste URL..."
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  disabled={isLoading}
+                  className="pl-11 h-14 bg-secondary/30 border-border/40 glow-ring"
+                />
+              </div>
+              <div className="relative w-full sm:w-40">
+                <select
+                  className="w-full h-14 bg-secondary/30 border-border/40 border text-sm px-4 rounded-md text-foreground focus:outline-none appearance-none"
+                  value={aspectRatio}
+                  onChange={(e) => setAspectRatio(e.target.value)}
+                  disabled={isLoading}
+                >
+                  <option value="9:16">9:16 Story</option>
+                  <option value="1:1">1:1 Square</option>
+                  <option value="16:9">16:10 Wide</option>
+                </select>
+              </div>
+              <Button disabled={isLoading} size="lg" className="h-14 px-10 font-bold bg-primary hover:bg-primary/90">
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sync Pipeline"}
+              </Button>
             </div>
-            
-            <div className="relative w-36">
-              <select
-                id="aspect-ratio-input"
-                className="w-full h-12 bg-secondary/40 border-border/60 border focus:border-primary/50 text-sm pl-4 pr-8 rounded-md appearance-none glow-ring text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                value={aspectRatio}
-                onChange={(e) => setAspectRatio(e.target.value)}
-                disabled={isLoading}
-              >
-                <option value="9:16">9:16 (Story)</option>
-                <option value="1:1">1:1 (Square)</option>
-                <option value="16:9">16:9 (Video)</option>
-              </select>
-            </div>
-
-            <Button
-              id="generate-reel-button"
-              type="submit"
-              disabled={isLoading}
-              size="lg"
-              className="h-12 px-8 font-semibold bg-primary hover:bg-primary/90 transition-all duration-200 shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-60"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Processing…
-                </>
-              ) : (
-                <>
-                  <Zap className="w-4 h-4" />
-                  Generate Reel
-                </>
-              )}
-            </Button>
+            <AudioPicker value={audioUrl} onChange={setAudioUrl} />
           </form>
-
-          {/* Audio Picker */}
-          <AudioPicker value={audioUrl} onChange={setAudioUrl} />
-
-          {/* Stats row */}
-          <div className="flex items-center justify-center gap-8 pt-4 animate-fade-in-up-delay-2">
-            {[
-              { label: "Pipeline Latency", value: "< 3s" },
-              { label: "Script accuracy", value: "98.4%" },
-              { label: "Supported formats", value: "9:16, 1:1, 16:9" },
-            ].map((stat) => (
-               <div key={stat.label} className="text-center">
-                 <p className="text-sm font-semibold text-foreground">{stat.value}</p>
-                 <p className="text-xs text-muted-foreground/60">{stat.label}</p>
-               </div>
-             ))}
-          </div>
         </section>
 
-        {/* ── Two-column engine grid ── */}
-        <section
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in-up-delay-2"
-          aria-label="Pipeline Engines"
-        >
-          {/* ── Left: Explainability Engine ── */}
-          <Card
-            id="explainability-engine-card"
-            className="card-glow border-border/50 bg-card/60 backdrop-blur-sm"
-          >
-            <CardHeader className="pb-3">
+        <section className="animate-fade-in-up-delay-2">
+          <Card className="border-border/40 bg-card/40 backdrop-blur-xl overflow-hidden card-glow">
+            <CardHeader className="border-b border-border/40 bg-muted/20 px-6 py-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                    <Code2 className="w-4 h-4 text-blue-400" />
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <Code2 className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-sm font-semibold">Explainability Engine</CardTitle>
-                    <CardDescription className="text-xs mt-0.5">
-                      Raw JSON script output
-                    </CardDescription>
+                    <CardTitle className="text-base font-bold">Pipeline Studio</CardTitle>
+                    <CardDescription className="text-xs">Processing Node: Core-Lambda</CardDescription>
                   </div>
                 </div>
-                {/* State badge */}
-                <div
-                  className={`px-2 py-1 rounded-full text-xs font-mono border ${
-                    engineState === "idle"
-                      ? "bg-muted/40 border-border/50 text-muted-foreground/60"
-                      : engineState === "loading"
-                      ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                      : engineState === "success"
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                      : "bg-destructive/10 border-destructive/30 text-destructive"
-                  }`}
-                >
-                  {engineState === "idle"
-                    ? "standby"
-                    : engineState === "loading"
-                    ? "generating…"
-                    : engineState === "success"
-                    ? "ready"
-                    : "failed"}
-                </div>
+                <StatusBadge state={engineState} />
               </div>
             </CardHeader>
-
-            <CardContent>
-              <ScrollArea className="h-[420px] rounded-lg border border-border/40 bg-background/60">
-                <div className="p-4 font-mono text-xs leading-relaxed">
-                  {engineState === "idle" && (
-                    <div className="flex flex-col items-center justify-center h-full py-24 gap-3 text-center">
-                      <Code2 className="w-10 h-10 text-muted-foreground/20" />
-                      <p className="text-muted-foreground/50 text-xs">
-                        Script output will appear here
-                      </p>
-                    </div>
-                  )}
-
-                  {engineState === "loading" && <ScriptSkeleton />}
-
-                  {hasScript && (
-                    <pre
-                      id="script-json-output"
-                      className="whitespace-pre-wrap break-words text-xs leading-5"
-                      dangerouslySetInnerHTML={{
-                        __html: highlightJson(JSON.stringify(scriptData, null, 2)),
-                      }}
-                    />
-                  )}
-
-                  {engineState === "error" && (
-                    <div className="flex flex-col items-center justify-center h-full py-24 gap-3 text-center">
-                      <AlertCircle className="w-10 h-10 text-destructive/50" />
-                      <p className="text-destructive/80 text-xs">
-                        Pipeline failed — check logs
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          {/* ── Right: Render Engine ── */}
-          <Card
-            id="render-engine-card"
-            className="card-glow border-border/50 bg-card/60 backdrop-blur-sm"
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                    <Film className="w-4 h-4 text-purple-400" />
+            <CardContent className="p-0">
+              <div className="grid grid-cols-1 lg:grid-cols-5 divide-y lg:divide-y-0 lg:divide-x divide-border/40">
+                {/* Panel 1: Data */}
+                <div className="lg:col-span-2 flex flex-col h-[520px]">
+                  <div className="px-4 py-2 bg-muted/10 border-b border-border/10">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Script Telemetry</span>
                   </div>
-                  <div>
-                    <CardTitle className="text-sm font-semibold">Render Engine</CardTitle>
-                    <CardDescription className="text-xs mt-0.5">
-                      {"<RemotionPlayer />"} preview
-                    </CardDescription>
-                  </div>
+                  <ScrollArea className="flex-1">
+                    <div className="p-6 font-mono text-[11px] leading-relaxed">
+                      {engineState === "loading" ? <ScriptSkeleton /> : scriptData ? (
+                        <pre dangerouslySetInnerHTML={{ __html: highlightJson(JSON.stringify(scriptData, null, 2)) }} />
+                      ) : (
+                        <div className="h-full flex items-center justify-center opacity-20"><Code2 className="w-12 h-12" /></div>
+                      )}
+                    </div>
+                  </ScrollArea>
                 </div>
-                <div
-                  className={`px-2 py-1 rounded-full text-xs font-mono border ${
-                    engineState === "idle"
-                      ? "bg-muted/40 border-border/50 text-muted-foreground/60"
-                      : engineState === "loading"
-                      ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                      : engineState === "success"
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                      : "bg-destructive/10 border-destructive/30 text-destructive"
-                  }`}
-                >
-                  {engineState === "idle"
-                    ? "idle"
-                    : engineState === "loading"
-                    ? "rendering…"
-                    : engineState === "success"
-                    ? "complete"
-                    : "error"}
-                </div>
-              </div>
-            </CardHeader>
 
-            <CardContent>
-              <div
-                id="remotion-player-container"
-                className="h-[420px] rounded-lg border border-border/40 bg-background/60 flex items-center justify-center overflow-hidden"
-                role="region"
-                aria-label="Remotion Player"
-                aria-live="polite"
-              >
-                {/* STRICT VALIDATION CHECKPOINT */}
-                {engineState === "success" && scriptData && Array.isArray((scriptData as any).scenes) ? (
-                  <Player scriptData={adaptScriptForRemotion(scriptData)} imageUrl={(scriptData as any).imageUrl || ""} aspectRatio={aspectRatio} backgroundAudioUrl={audioUrl} />
-                ) : (
-                  <div className="text-gray-500">Awaiting URL...</div>
-                )}
-              </div>
-              
-              {/* Export Video Section */}
-              {hasScript && (
-                <div className="mt-4 flex flex-col gap-3 relative animate-fade-in-up">
-                  <Button
-                    onClick={handleExport}
-                    disabled={isExporting}
-                    className="w-full font-semibold relative overflow-hidden"
-                    variant="secondary"
-                  >
-                    {isExporting ? `Rendering... ${Math.round(exportProgress)}%` : "Export Video"}
-                    
-                    {/* Integrated background progress bar for aesthetic feel */}
-                    {isExporting && (
-                      <div 
-                        className="absolute left-0 top-0 bottom-0 bg-primary/20 transition-all duration-100 ease-linear pointer-events-none" 
-                        style={{ width: `${exportProgress}%` }} 
-                      />
+                {/* Panel 2: Preview */}
+                <div className="lg:col-span-3 flex flex-col h-[520px] bg-muted/5">
+                  <div className="px-4 py-2 bg-muted/10 border-b border-border/10 flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Output Buffer</span>
+                    {engineState === "success" && (
+                      <Button variant="ghost" size="sm" onClick={handleExport} disabled={isExporting} className="h-6 text-[10px] uppercase font-bold text-primary">
+                        {isExporting ? `Exporting ${Math.round(exportProgress)}%` : <><Download className="w-3 h-3 mr-1" /> Export WebM</>}
+                      </Button>
                     )}
-                  </Button>
+                  </div>
+                  <div className="flex-1 flex items-center justify-center p-8 bg-black/20">
+                    <div className="w-full h-full rounded-2xl border border-border/60 bg-background/80 flex items-center justify-center overflow-hidden relative shadow-2xl">
+                    {engineState === "success" && scriptData ? (
+                      <Player 
+                        scriptData={adaptScriptForRemotion(scriptData)} 
+                        imageUrl={(scriptData as any).imageUrl || ""} 
+                        aspectRatio={aspectRatio} 
+                        backgroundAudioUrl={audioUrl} 
+                      />
+                    ) : (
+                      <RenderPlaceholder state={engineState} />
+                    )}
+                    </div>
+                  </div>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         </section>
 
-        {/* Footer note */}
-        <footer className="text-center text-xs text-muted-foreground/40 pb-6">
-          LINK2AD © 2026 · AI pipeline powered by Next.js 14 App Router
+        <footer className="text-center text-[10px] text-muted-foreground/30 font-mono tracking-widest uppercase pb-12">
+          Pipeline Online • System Integrity Nominal • 2026
         </footer>
       </div>
     </main>
   );
-
+}
