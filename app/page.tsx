@@ -170,6 +170,7 @@ export default function DashboardPage() {
   const [url, setUrl] = useState("");
   const [aspectRatio, setAspectRatio] = useState("9:16");
   const [audioUrl, setAudioUrl] = useState(DEFAULT_TRACK.url);
+  const [audioStartOffset, setAudioStartOffset] = useState(0);
   const [engineState, setEngineState] = useState<EngineState>("idle");
   const [scriptData, setScriptData] = useState<Record<string, unknown> | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -208,7 +209,7 @@ export default function DashboardPage() {
       const response = await fetch("/api/pipeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: trimmed, aspectRatio, audioUrl }),
+        body: JSON.stringify({ url: trimmed, aspectRatio, audioUrl, audioStartOffset }),
       });
 
       if (!response.ok) {
@@ -409,7 +410,12 @@ export default function DashboardPage() {
           </form>
 
           {/* Audio Picker */}
-          <AudioPicker value={audioUrl} onChange={setAudioUrl} />
+          <AudioPicker 
+            value={audioUrl} 
+            onChange={setAudioUrl} 
+            offset={audioStartOffset}
+            onOffsetChange={setAudioStartOffset}
+          />
 
           {/* Stats row */}
           <div className="flex items-center justify-center gap-8 pt-4 animate-fade-in-up-delay-2">
@@ -559,7 +565,13 @@ export default function DashboardPage() {
               >
                 {/* STRICT VALIDATION CHECKPOINT */}
                 {engineState === "success" && scriptData && Array.isArray((scriptData as any).scenes) ? (
-                  <Player scriptData={adaptScriptForRemotion(scriptData)} imageUrl={(scriptData as any).imageUrl || ""} aspectRatio={aspectRatio} backgroundAudioUrl={audioUrl} />
+                  <Player 
+                    scriptData={adaptScriptForRemotion(scriptData)} 
+                    imageUrl={(scriptData as any).imageUrl || ""} 
+                    aspectRatio={aspectRatio} 
+                    backgroundAudioUrl={audioUrl}
+                    audioStartOffset={audioStartOffset}
+                  />
                 ) : (
                   <div className="text-gray-500">Awaiting URL...</div>
                 )}
