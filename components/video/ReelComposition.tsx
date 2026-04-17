@@ -13,13 +13,20 @@ export interface ReelCompositionProps {
   imageUrl: string;
   backgroundAudioUrl?: string;
   audioStartOffset?: number;
+  customOverlay?: {
+    text: string;
+    size: number;
+    color: string;
+    font: string;
+  };
 }
 
 export const ReelComposition: React.FC<ReelCompositionProps> = ({ 
   scenes, 
   imageUrl, 
   backgroundAudioUrl,
-  audioStartOffset = 0
+  audioStartOffset = 0,
+  customOverlay
 }) => {
   let currentTime = 0;
 
@@ -48,6 +55,37 @@ export const ReelComposition: React.FC<ReelCompositionProps> = ({
           </Sequence>
         );
       })}
+
+      {/* Persistent Custom Overlay */}
+      {customOverlay && customOverlay.text && (
+        <AbsoluteFill 
+          style={{ 
+            pointerEvents: 'none',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingBottom: '20%', // Shift it slightly to not hide main text
+          }}
+        >
+          <div 
+            style={{ 
+              color: customOverlay.color,
+              fontSize: `${customOverlay.size}px`,
+              fontFamily: customOverlay.font,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              textShadow: '0 4px 12px rgba(0,0,0,0.5)',
+              padding: '10px 20px',
+              backgroundColor: 'rgba(0,0,0,0.2)',
+              borderRadius: '8px',
+              maxWidth: '80%',
+            }}
+          >
+            {customOverlay.text}
+          </div>
+        </AbsoluteFill>
+      )}
     </AbsoluteFill>
   );
 };

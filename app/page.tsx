@@ -135,6 +135,13 @@ export default function DashboardPage() {
   const [audioStartOffset, setAudioStartOffset] = useState(0);
   const [engineState, setEngineState] = useState<EngineState>("idle");
   const [scriptData, setScriptData] = useState<Record<string, unknown> | null>(null);
+  
+  // Custom Overlay State
+  const [overlayText, setOverlayText] = useState("");
+  const [overlaySize, setOverlaySize] = useState(60);
+  const [overlayColor, setOverlayColor] = useState("#ffffff");
+  const [overlayFont, setOverlayFont] = useState("Inter, sans-serif");
+
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const { toast } = useToast();
@@ -243,7 +250,8 @@ export default function DashboardPage() {
             High-speed AI pipeline for turning product URLs into professional reels.
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-3xl mx-auto mt-8 animate-fade-in-up-delay-1">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6 max-w-4xl mx-auto mt-8 animate-fade-in-up-delay-1">
+            {/* Row 1: URL, Ratio, Sync */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
@@ -279,6 +287,50 @@ export default function DashboardPage() {
               offset={audioStartOffset}
               onOffsetChange={setAudioStartOffset}
             />
+
+            {/* Row 3: Custom Text Overlay Tools */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-5 rounded-2xl bg-muted/20 border border-border/40 backdrop-blur-sm">
+              <div className="md:col-span-1 flex flex-col items-start gap-1 justify-center">
+                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Custom Overlay</span>
+                <p className="text-[10px] text-muted-foreground">Add your brand text</p>
+              </div>
+              
+              <div className="md:col-span-1">
+                <Input 
+                  placeholder="Overlay Text..." 
+                  value={overlayText}
+                  onChange={(e) => setOverlayText(e.target.value)}
+                  className="h-10 bg-background/50 text-xs"
+                />
+              </div>
+
+              <div className="flex gap-2 items-center">
+                 <Input 
+                  type="number"
+                  placeholder="Size"
+                  value={overlaySize}
+                  onChange={(e) => setOverlaySize(parseInt(e.target.value))}
+                  className="h-10 w-20 bg-background/50 text-xs"
+                />
+                <input 
+                  type="color" 
+                  value={overlayColor}
+                  onChange={(e) => setOverlayColor(e.target.value)}
+                  className="w-10 h-10 rounded-md bg-transparent border-none cursor-pointer"
+                />
+              </div>
+
+              <select
+                className="h-10 bg-background/50 border border-border/40 text-xs px-3 rounded-md text-foreground focus:outline-none"
+                value={overlayFont}
+                onChange={(e) => setOverlayFont(e.target.value)}
+              >
+                <option value="Inter, sans-serif">Inter (Modern)</option>
+                <option value="'Playfair Display', serif">Playfair (Elegant)</option>
+                <option value="'JetBrains Mono', monospace">JetBrains (Tech)</option>
+                <option value="Arial, sans-serif">Arial (Standard)</option>
+              </select>
+            </div>
           </form>
 
           {/* Stats row */}
@@ -349,6 +401,12 @@ export default function DashboardPage() {
                         aspectRatio={aspectRatio} 
                         backgroundAudioUrl={audioUrl} 
                         audioStartOffset={audioStartOffset}
+                        customOverlay={{
+                          text: overlayText,
+                          size: overlaySize,
+                          color: overlayColor,
+                          font: overlayFont
+                        }}
                       />
                     ) : (
                       <RenderPlaceholder state={engineState} />

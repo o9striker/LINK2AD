@@ -11,6 +11,7 @@ export interface PlayerProps {
   audioStartOffset?: number;
   autoPlay?: boolean;
   aspectRatio?: string;
+  customOverlay?: ReelCompositionProps['customOverlay'];
 }
 
 export const Player: React.FC<PlayerProps> = ({
@@ -20,13 +21,15 @@ export const Player: React.FC<PlayerProps> = ({
   audioStartOffset = 0,
   autoPlay = true,
   aspectRatio = "9:16",
+  customOverlay,
 }) => {
   const inputProps = React.useMemo<ReelCompositionProps>(() => ({
     scenes: scriptData,
     imageUrl,
     backgroundAudioUrl: backgroundAudioUrl || undefined,
     audioStartOffset,
-  }), [scriptData, imageUrl, backgroundAudioUrl, audioStartOffset]);
+    customOverlay,
+  }), [scriptData, imageUrl, backgroundAudioUrl, audioStartOffset, customOverlay]);
 
   // Calculate total duration across all sequential scenes
   const totalFrames = React.useMemo(() => {
