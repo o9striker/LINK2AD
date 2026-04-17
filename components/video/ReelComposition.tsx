@@ -12,16 +12,26 @@ export interface ReelCompositionProps {
   scenes: ReelScene[];
   imageUrl: string;
   backgroundAudioUrl?: string;
+  audioStartOffset?: number;
 }
 
-export const ReelComposition: React.FC<ReelCompositionProps> = ({ scenes, imageUrl, backgroundAudioUrl }) => {
+export const ReelComposition: React.FC<ReelCompositionProps> = ({ 
+  scenes, 
+  imageUrl, 
+  backgroundAudioUrl,
+  audioStartOffset = 0
+}) => {
   let currentTime = 0;
 
   return (
     <AbsoluteFill className="bg-black">
       {/* Single background music track that plays across all scenes */}
       {backgroundAudioUrl && (
-        <Audio src={backgroundAudioUrl} volume={0.6} />
+        <Audio 
+          src={backgroundAudioUrl} 
+          volume={0.6} 
+          startFrom={Math.round(audioStartOffset * 30)} 
+        />
       )}
 
       {scenes.map((scene, index) => {

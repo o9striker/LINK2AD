@@ -192,3 +192,13 @@ body::before {
 .json-null {
   color: hsl(0 0% 60%);
 }
+
+/* Scrollbar utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

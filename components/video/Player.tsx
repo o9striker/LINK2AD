@@ -8,6 +8,7 @@ export interface PlayerProps {
   scriptData: ReelCompositionProps['scenes'];
   imageUrl?: string;
   backgroundAudioUrl?: string;
+  audioStartOffset?: number;
   autoPlay?: boolean;
   aspectRatio?: string;
 }
@@ -16,6 +17,7 @@ export const Player: React.FC<PlayerProps> = ({
   scriptData,
   imageUrl = "",
   backgroundAudioUrl = "",
+  audioStartOffset = 0,
   autoPlay = true,
   aspectRatio = "9:16",
 }) => {
@@ -23,7 +25,8 @@ export const Player: React.FC<PlayerProps> = ({
     scenes: scriptData,
     imageUrl,
     backgroundAudioUrl: backgroundAudioUrl || undefined,
-  }), [scriptData, imageUrl, backgroundAudioUrl]);
+    audioStartOffset,
+  }), [scriptData, imageUrl, backgroundAudioUrl, audioStartOffset]);
 
   // Calculate total duration across all sequential scenes
   const totalFrames = React.useMemo(() => {
