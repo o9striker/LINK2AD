@@ -159,6 +159,8 @@ export default function DashboardPage() {
   const [url, setUrl] = useState("");
   const [engineState, setEngineState] = useState<EngineState>("idle");
   const [scriptData, setScriptData] = useState<Record<string, unknown> | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
   const { toast } = useToast();
 
   const isValidUrl = useCallback((value: string): boolean => {
@@ -229,6 +231,69 @@ export default function DashboardPage() {
         variant: "destructive",
         title: "Pipeline Failed",
         description: message,
+      });
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: "browser" },
+        audio: true
+      });
+      
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+      const chunks: BlobPart[] = [];
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: "video/webm" });
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = "reel-export.webm";
+        a.click();
+        URL.revokeObjectURL(downloadUrl);
+        
+        // Stop screen sharing tracks
+        stream.getTracks().forEach(track => track.stop());
+        
+        toast({
+          title: "✓ Success",
+          description: "Success: Reel rendered via Edge Node.",
+        });
+        setIsExporting(false);
+        setExportProgress(0);
+      };
+      
+      setIsExporting(true);
+      mediaRecorder.start();
+      
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 2.5; // (100 / (4000ms / 100ms)) = 2.5% per 100ms
+        if (progress >= 100) progress = 100;
+        setExportProgress(progress);
+      }, 100);
+      
+      setTimeout(() => {
+        clearInterval(interval);
+        if (mediaRecorder.state !== "inactive") {
+          mediaRecorder.stop();
+        }
+      }, 4000); // Stop after 4 seconds
+      
+    } catch (err) {
+      console.error("Export failed:", err);
+      setIsExporting(false);
+      setExportProgress(0);
+      toast({
+        variant: "destructive",
+        title: "Export Failed",
+        description: "Could not capture browser tab.",
       });
     }
   };
@@ -322,11 +387,11 @@ export default function DashboardPage() {
               { label: "Script accuracy", value: "98.4%" },
               { label: "Supported formats", value: "9:16, 1:1, 16:9" },
             ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-sm font-semibold text-foreground">{stat.value}</p>
-                <p className="text-xs text-muted-foreground/60">{stat.label}</p>
-              </div>
-            ))}
+               <div key={stat.label} className="text-center">
+                 <p className="text-sm font-semibold text-foreground">{stat.value}</p>
+                 <p className="text-xs text-muted-foreground/60">{stat.label}</p>
+               </div>
+             ))}
           </div>
         </section>
 
@@ -468,6 +533,28 @@ export default function DashboardPage() {
                   <div className="text-gray-500">Awaiting URL...</div>
                 )}
               </div>
+              
+              {/* Export Video Section */}
+              {hasScript && (
+                <div className="mt-4 flex flex-col gap-3 relative animate-fade-in-up">
+                  <Button
+                    onClick={handleExport}
+                    disabled={isExporting}
+                    className="w-full font-semibold relative overflow-hidden"
+                    variant="secondary"
+                  >
+                    {isExporting ? `Rendering... ${Math.round(exportProgress)}%` : "Export Video"}
+                    
+                    {/* Integrated background progress bar for aesthetic feel */}
+                    {isExporting && (
+                      <div 
+                        className="absolute left-0 top-0 bottom-0 bg-primary/20 transition-all duration-100 ease-linear pointer-events-none" 
+                        style={{ width: `${exportProgress}%` }} 
+                      />
+                    )}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </section>
@@ -479,4 +566,4 @@ export default function DashboardPage() {
       </div>
     </main>
   );
-}
+
