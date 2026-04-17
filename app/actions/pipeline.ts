@@ -75,10 +75,31 @@ export async function generateAdScript(url: string): Promise<PipelineResult> {
       extractedImages.push(ogImage);
     }
 
+    const parseHighResUrl = (srcAttr: string, srcsetAttr?: string) => {
+      let finalSrc = srcAttr;
+      if (srcsetAttr) {
+        const parsed = srcsetAttr.split(',').map(s => s.trim().split(/\s+/)).filter(p => p.length > 0);
+        parsed.sort((a, b) => {
+            const wA = a[1] ? parseInt(a[1]) : 0;
+            const wB = b[1] ? parseInt(b[1]) : 0;
+            return wB - wA;
+        });
+        if (parsed.length > 0 && parsed[0][0]) finalSrc = parsed[0][0];
+      }
+      
+      // Aggressively strip CMS low-res specifiers (Shopify, WP, Next)
+      if (finalSrc.startsWith('//')) finalSrc = 'https:' + finalSrc;
+      finalSrc = finalSrc.replace(/_[0-9]+x[0-9]+(?=\.[a-zA-Z]+$)/, '');
+      finalSrc = finalSrc.replace(/&width=\d+/g, '').replace(/\?width=\d+$/, '');
+      return finalSrc;
+    };
+
     $('img').each((i, el) => {
-      let src = $(el).attr('src') || $(el).attr('data-src');
-      if (src) {
-        if (!src.startsWith('http') && src.startsWith('//')) src = 'https:' + src;
+      let baseSrc = $(el).attr('src') || $(el).attr('data-src');
+      let srcset = $(el).attr('srcset') || $(el).attr('data-srcset');
+      
+      if (baseSrc) {
+        let src = parseHighResUrl(baseSrc, srcset);
         const lowerSrc = src.toLowerCase();
         
         const isNotIcon = !lowerSrc.includes('logo') && 
@@ -152,8 +173,11 @@ Title: ${title}
 Desc: ${description}
 Available Images: ${JSON.stringify(images)}
 
-Return ONLY the required JSON fields. durationInFrames MUST add to 450.
-For each scene, choose the most appropriate image URL from the Available Images array for 'sceneImage'.`;
+CRITICAL CONSTRAINTS:
+1. Return ONLY the required JSON fields.
+2. durationInFrames MUST exactly sum to 450.
+3. For each scene, choose the most appropriate image URL from the 'Available Images' array for 'sceneImage'.
+4. STRICT: If there is only ONE image in 'Available Images', you MUST use that exact same URL for every single scene's 'sceneImage'. Do NOT invent or hallucinate URLs.`;
 
     const result = await model.generateContent(prompt);
     

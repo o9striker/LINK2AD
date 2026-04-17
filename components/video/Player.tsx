@@ -8,9 +8,10 @@ export interface PlayerProps {
   scriptData: ReelCompositionProps['scenes'];
   imageUrl?: string;
   autoPlay?: boolean;
+  aspectRatio?: string;
 }
 
-export const Player: React.FC<PlayerProps> = ({ scriptData, imageUrl = "", autoPlay = true }) => {
+export const Player: React.FC<PlayerProps> = ({ scriptData, imageUrl = "", autoPlay = true, aspectRatio = "9:16" }) => {
   const inputProps = React.useMemo<ReelCompositionProps>(() => ({
     scenes: scriptData,
     imageUrl: imageUrl
@@ -25,6 +26,17 @@ export const Player: React.FC<PlayerProps> = ({ scriptData, imageUrl = "", autoP
   // Ensure there's a valid frame duration (fallback 30 to avoid crash)
   const durationInFrames = totalFrames > 0 ? totalFrames : 30;
 
+  let compWidth = 1080;
+  let compHeight = 1920;
+  
+  if (aspectRatio === "1:1") {
+    compWidth = 1080;
+    compHeight = 1080;
+  } else if (aspectRatio === "16:9") {
+    compWidth = 1920;
+    compHeight = 1080;
+  }
+
   return (
     <div className="flex justify-center items-center w-full max-w-sm mx-auto bg-neutral-900 rounded-3xl overflow-hidden shadow-2xl p-2 border border-neutral-700/50">
       <RemotionPlayer
@@ -33,11 +45,11 @@ export const Player: React.FC<PlayerProps> = ({ scriptData, imageUrl = "", autoP
         inputProps={inputProps}
         durationInFrames={durationInFrames}
         fps={30}
-        compositionWidth={1080}
-        compositionHeight={1920}
+        compositionWidth={compWidth}
+        compositionHeight={compHeight}
         style={{
           width: '100%',
-          aspectRatio: '9 / 16',
+          aspectRatio: aspectRatio.replace(':', ' / '),
           borderRadius: '16px',
         }}
         controls

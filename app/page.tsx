@@ -147,17 +147,26 @@ const adaptScriptForRemotion = (data: any) => {
     console.warn(`[${new Date().toISOString()}] ADAPTER: WARNING - No imageUrl found in script data`);
   }
 
-  return (data.scenes || []).map((scene: any) => ({
-    durationInFrames: scene.duration_seconds * 30, // Assuming 30fps
-    textOverlay: scene.visuals.overlay_text || "",
-    voiceoverText: scene.audio.voiceover || "",
-    audioUrl: scene.audio.audioUrl || "", // Fallback if VSB hasn't mapped the Base64 yet
-    sceneImage: scene.visuals.imageUrl || ""
-  }));
+  return (data.scenes || []).map((scene: any) => {
+    let extractedImage = scene.visuals.imageUrl || "";
+    // If Gemini hallucinates "none" or an invalid path, wipe it so the global fallback applies
+    if (extractedImage && !extractedImage.startsWith('http')) {
+      extractedImage = "";
+    }
+    
+    return {
+      durationInFrames: scene.duration_seconds * 30, // Assuming 30fps
+      textOverlay: scene.visuals.overlay_text || "",
+      voiceoverText: scene.audio.voiceover || "",
+      audioUrl: scene.audio.audioUrl || "", // Fallback if VSB hasn't mapped the Base64 yet
+      sceneImage: extractedImage
+    };
+  });
 }
 
 export default function DashboardPage() {
   const [url, setUrl] = useState("");
+  const [aspectRatio, setAspectRatio] = useState("9:16");
   const [engineState, setEngineState] = useState<EngineState>("idle");
   const [scriptData, setScriptData] = useState<Record<string, unknown> | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -196,7 +205,7 @@ export default function DashboardPage() {
       const response = await fetch("/api/pipeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: trimmed }),
+        body: JSON.stringify({ url: trimmed, aspectRatio }),
       });
 
       if (!response.ok) {
@@ -360,6 +369,21 @@ export default function DashboardPage() {
                 autoComplete="url"
               />
             </div>
+            
+            <div className="relative w-36">
+              <select
+                id="aspect-ratio-input"
+                className="w-full h-12 bg-secondary/40 border-border/60 border focus:border-primary/50 text-sm pl-4 pr-8 rounded-md appearance-none glow-ring text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                value={aspectRatio}
+                onChange={(e) => setAspectRatio(e.target.value)}
+                disabled={isLoading}
+              >
+                <option value="9:16">9:16 (Story)</option>
+                <option value="1:1">1:1 (Square)</option>
+                <option value="16:9">16:9 (Video)</option>
+              </select>
+            </div>
+
             <Button
               id="generate-reel-button"
               type="submit"
@@ -529,7 +553,7 @@ export default function DashboardPage() {
               >
                 {/* STRICT VALIDATION CHECKPOINT */}
                 {engineState === "success" && scriptData && Array.isArray((scriptData as any).scenes) ? (
-                  <Player scriptData={adaptScriptForRemotion(scriptData)} imageUrl={(scriptData as any).imageUrl || ""} />
+                  <Player scriptData={adaptScriptForRemotion(scriptData)} imageUrl={(scriptData as any).imageUrl || ""} aspectRatio={aspectRatio} />
                 ) : (
                   <div className="text-gray-500">Awaiting URL...</div>
                 )}
