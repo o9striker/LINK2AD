@@ -4,6 +4,7 @@ import { z } from "zod";
 export const ScriptItemSchema = z.object({
   textOverlay: z.string(),
   voiceoverText: z.string(),
+  sceneImage: z.string(),
 });
 
 export type ScriptItem = z.infer<typeof ScriptItemSchema>;
@@ -14,6 +15,7 @@ export const SynchronizedScriptSchema = z.object({
   textOverlay: z.string(),
   voiceoverText: z.string(),
   audioUrl: z.string(),
+  sceneImage: z.string(),
 });
 
 export type SynchronizedScript = z.infer<typeof SynchronizedScriptSchema>;
@@ -103,6 +105,7 @@ export function synchronizeScriptAndAudio(
       textOverlay: item.textOverlay,
       voiceoverText: item.voiceoverText,
       audioUrl: audioResult.audioUrl,
+      sceneImage: item.sceneImage,
     };
   });
 }

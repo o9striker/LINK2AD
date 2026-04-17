@@ -151,7 +151,8 @@ const adaptScriptForRemotion = (data: any) => {
     durationInFrames: scene.duration_seconds * 30, // Assuming 30fps
     textOverlay: scene.visuals.overlay_text || "",
     voiceoverText: scene.audio.voiceover || "",
-    audioUrl: scene.audio.audioUrl || "" // Fallback if VSB hasn't mapped the Base64 yet
+    audioUrl: scene.audio.audioUrl || "", // Fallback if VSB hasn't mapped the Base64 yet
+    sceneImage: scene.visuals.imageUrl || ""
   }));
 }
 

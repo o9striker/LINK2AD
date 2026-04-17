@@ -33,6 +33,7 @@ export async function POST(req: Request) {
       visuals: {
         description: "",
         overlay_text: scene.textOverlay,
+        imageUrl: scene.sceneImage,
       },
       audio: {
         voiceover: scene.voiceoverText,
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
       status: "success",
       script: {
         scenes,
-        imageUrl: result.scrapedData?.image || "",
+        imageUrl: result.scrapedData?.images?.[0] || "",
       },
     });
   } catch (error) {

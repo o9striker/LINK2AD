@@ -5,6 +5,7 @@ export interface ReelScene {
   textOverlay: string;
   audioUrl: string;
   durationInFrames: number;
+  sceneImage?: string;
 }
 
 export interface ReelCompositionProps {
@@ -54,6 +55,8 @@ const SceneContent: React.FC<{ scene: ReelScene; imageUrl: string }> = ({ scene,
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
 
+  const displayImage = scene.sceneImage || imageUrl;
+
   return (
     <AbsoluteFill className="bg-black">
       <AbsoluteFill style={{ 
@@ -61,9 +64,9 @@ const SceneContent: React.FC<{ scene: ReelScene; imageUrl: string }> = ({ scene,
         transformOrigin: 'center center',
         background: 'linear-gradient(to bottom, #000000, #333333)'
       }}>
-        {imageUrl && (
+        {displayImage && (
           <Img
-            src={imageUrl}
+            src={displayImage}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         )}
