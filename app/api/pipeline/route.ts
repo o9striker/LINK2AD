@@ -4,7 +4,7 @@ import { processMediaPipeline } from "@/lib/audio/tts";
 
 export async function POST(req: Request) {
   try {
-    const { url } = await req.json();
+    const { url, audioUrl } = await req.json();
 
     if (!url) {
       return NextResponse.json(
@@ -37,7 +37,8 @@ export async function POST(req: Request) {
       },
       audio: {
         voiceover: scene.voiceoverText,
-        audioUrl: scene.audioUrl,
+        // Prefer the user-chosen audioUrl; fall back to TTS mock
+        audioUrl: audioUrl || scene.audioUrl,
       },
     }));
 

@@ -1,6 +1,8 @@
 "use client";
 
 import { Player } from '@/components/video/Player';
+import { AudioPicker } from '@/components/ui/AudioPicker';
+import { DEFAULT_TRACK } from '@/lib/audioLibrary';
 
 import { useState, useCallback } from "react";
 import { Zap, Link2, Code2, Film, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
@@ -167,6 +169,7 @@ const adaptScriptForRemotion = (data: any) => {
 export default function DashboardPage() {
   const [url, setUrl] = useState("");
   const [aspectRatio, setAspectRatio] = useState("9:16");
+  const [audioUrl, setAudioUrl] = useState(DEFAULT_TRACK.url);
   const [engineState, setEngineState] = useState<EngineState>("idle");
   const [scriptData, setScriptData] = useState<Record<string, unknown> | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -205,7 +208,7 @@ export default function DashboardPage() {
       const response = await fetch("/api/pipeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: trimmed, aspectRatio }),
+        body: JSON.stringify({ url: trimmed, aspectRatio, audioUrl }),
       });
 
       if (!response.ok) {
@@ -405,6 +408,9 @@ export default function DashboardPage() {
             </Button>
           </form>
 
+          {/* Audio Picker */}
+          <AudioPicker value={audioUrl} onChange={setAudioUrl} />
+
           {/* Stats row */}
           <div className="flex items-center justify-center gap-8 pt-4 animate-fade-in-up-delay-2">
             {[
@@ -553,7 +559,7 @@ export default function DashboardPage() {
               >
                 {/* STRICT VALIDATION CHECKPOINT */}
                 {engineState === "success" && scriptData && Array.isArray((scriptData as any).scenes) ? (
-                  <Player scriptData={adaptScriptForRemotion(scriptData)} imageUrl={(scriptData as any).imageUrl || ""} aspectRatio={aspectRatio} />
+                  <Player scriptData={adaptScriptForRemotion(scriptData)} imageUrl={(scriptData as any).imageUrl || ""} aspectRatio={aspectRatio} backgroundAudioUrl={audioUrl} />
                 ) : (
                   <div className="text-gray-500">Awaiting URL...</div>
                 )}

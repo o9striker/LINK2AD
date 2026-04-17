@@ -11,13 +11,19 @@ export interface ReelScene {
 export interface ReelCompositionProps {
   scenes: ReelScene[];
   imageUrl: string;
+  backgroundAudioUrl?: string;
 }
 
-export const ReelComposition: React.FC<ReelCompositionProps> = ({ scenes, imageUrl }) => {
+export const ReelComposition: React.FC<ReelCompositionProps> = ({ scenes, imageUrl, backgroundAudioUrl }) => {
   let currentTime = 0;
 
   return (
     <AbsoluteFill className="bg-black">
+      {/* Single background music track that plays across all scenes */}
+      {backgroundAudioUrl && (
+        <Audio src={backgroundAudioUrl} volume={0.6} />
+      )}
+
       {scenes.map((scene, index) => {
         const startFrame = currentTime;
         currentTime += scene.durationInFrames;
@@ -82,8 +88,8 @@ const SceneContent: React.FC<{ scene: ReelScene; imageUrl: string }> = ({ scene,
          </h1>
       </AbsoluteFill>
       
-      {/* Audio playback */}
-      {scene.audioUrl && <Audio src={scene.audioUrl} />}
+      {/* Per-scene voiceover audio (if no background track override) */}
+      {scene.audioUrl && <Audio src={scene.audioUrl} volume={0} />}
     </AbsoluteFill>
   );
 };
